@@ -86,4 +86,44 @@ def main():
     st.caption("© 2026 姆斯遊戲服務 | 雲端資料庫即時連線中")
 
 if __name__ == "__main__":
+
     main()
+
+
+# 1. 定義 CSS (讓卡片有陰影、圓角)
+st.markdown("""
+    <style>
+    .game-card {
+        background-color: #ffffff;
+        border-radius: 10px;
+        padding: 15px;
+        margin-bottom: 10px;
+        border: 1px solid #e6e9ef;
+        box-shadow: 2px 2px 5px rgba(0,0,0,0.05);
+    }
+    .game-title {
+        color: #1E88E5;
+        font-size: 18px;
+        font-weight: bold;
+    }
+    .price-tag {
+        color: #ff4b4b;
+        font-size: 20px;
+        font-weight: bold;
+        float: right;
+    }
+    </style>
+    """, unsafe_allow_html=True)
+
+# 2. 顯示卡片
+if not df_result.empty:
+    for _, row in df_result.iterrows():
+        st.markdown(f"""
+            <div class="game-card">
+                <span class="price-tag">{int(row['price'])} NT</span>
+                <div class="game-title">【{row['game_name']}】</div>
+                <div style="color: gray; font-size: 14px;">
+                    {row['category']} ‧ {row['item_name']}
+                </div>
+            </div>
+        """, unsafe_allow_html=True)
