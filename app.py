@@ -2,15 +2,8 @@ import streamlit as st
 import psycopg2
 import pandas as pd
 
-# --- 1. 網頁基本設定 ---
-st.set_page_config(
-    page_title="姆斯遊戲價格查詢系統",
-    page_icon="🎮",
-    layout="centered"
-)
+st.set_page_config(page_title="姆斯遊戲商城", layout="wide", page_icon="🎮")
 
-# --- 2. 安全連線函式 ---
-# 使用 st.cache_resource 避免每次搜尋都重新連線資料庫，提高效能
 @st.cache_resource
 def get_connection():
     try:
@@ -19,111 +12,75 @@ def get_connection():
             database=st.secrets["DB_NAME"],
             user=st.secrets["DB_USER"],
             password=st.secrets["DB_PASS"],
-            port=st.secrets["DB_PORT"]
+            port=st.secrets["DB_PORT"],
+            sslmode="require"
         )
-    except Exception as e:
-        st.error(f"❌ 資料庫連線失敗，請檢查 Secrets 設定：{e}")
+    except:
         return None
 
-# --- 3. 資料查詢邏輯 ---
-def search_prices(keyword):
-    conn = get_connection()
-    if conn:
-        try:
-            # 使用 ILIKE 進行不分大小寫的模糊搜尋
-            query = """
-            SELECT 
-                category AS "類別", 
-                game_name AS "遊戲名稱", 
-                item_name AS "商品內容", 
-                price AS "價格 (NT)"
-            FROM GamePrices
-            WHERE game_name ILIKE %s OR item_name ILIKE %s
-            ORDER BY game_name, price ASC;
-            """
-            # 使用 pandas 處理查詢結果
-            df = pd.read_sql(query, conn, params=(f'%{keyword}%', f'%{keyword}%'))
-            return df
-        except Exception as e:
-            st.error(f"🔍 查詢時發生錯誤：{e}")
-            return None
-    return None
-
-# --- 4. 網頁介面設計 ---
-def main():
-    st.title("🎮 姆斯遊戲價格查詢系統")
-    st.markdown("---")
-    
-    # 搜尋框與說明
-    st.write("請輸入您想查詢的**遊戲名稱**或**商品內容**（如：點券、硬幣）")
-    keyword = st.text_input("🔍 搜尋框", placeholder="例如：傳說對決、特戰、Apex...")
-
-    if keyword:
-        with st.spinner('正在從雲端資料庫抓取最新價格...'):
-            df_result = search_prices(keyword)
-            
-            if df_result is not None:
-                if not df_result.empty:
-                    st.success(f"✅ 找到 {len(df_result)} 筆相關結果")
-                    
-                    # 顯示資料表格
-                    # hide_index=True 隱藏左側無意義的序號
-                    st.dataframe(
-                        df_result, 
-                        use_container_width=True, 
-                        hide_index=True
-                    )
-                    
-                    st.info("💡 小撇步：點擊表格標題（如：價格）可以進行即時排序喔！")
-                else:
-                    st.warning(f"查無資料：找不到關於 '{keyword}' 的內容，請嘗試縮短關鍵字。")
-    else:
-        # 未搜尋時顯示的歡迎畫面
-        st.info("請在上方輸入關鍵字開始查詢。")
-        
-    # 頁尾
-    st.markdown("---")
-    st.caption("© 2026 姆斯遊戲服務 | 雲端資料庫即時連線中")
-
-if __name__ == "__main__":
-
-    main()
-
-
-# 1. 定義 CSS (讓卡片有陰影、圓角)
+# 蝦皮橘色風格 CSS
 st.markdown("""
     <style>
     .game-card {
-        background-color: #ffffff;
-        border-radius: 10px;
-        padding: 15px;
-        margin-bottom: 10px;
-        border: 1px solid #e6e9ef;
-        box-shadow: 2px 2px 5px rgba(0,0,0,0.05);
+        background-color: #ffffff; border: 1px solid #ddd; border-radius: 8px;
+        text-align: center; transition: 0.3s; cursor: pointer; color: #333;
     }
-    .game-title {
-        color: #1E88E5;
-        font-size: 18px;
-        font-weight: bold;
-    }
-    .price-tag {
-        color: #ff4b4b;
-        font-size: 20px;
-        font-weight: bold;
-        float: right;
+    .game-card:hover { border-color: #ee4d2d; box-shadow: 0 4px 12px rgba(0,0,0,0.1); }
+    .price-card {
+        background-color: #262730; border-radius: 10px; padding: 20px;
+        margin-bottom: 12px; border-left: 5px solid #ee4d2d;
     }
     </style>
-    """, unsafe_allow_html=True)
+""", unsafe_allow_html=True)
 
-# 2. 顯示卡片
-if not df_result.empty:
-    for _, row in df_result.iterrows():
-        st.markdown(f"""
-            <div class="game-card">
-                <span class="price-tag">{int(row['price'])} NT</span>
-                <div class="game-title">【{row['game_name']}】</div>
-                <div style="color: gray; font-size: 14px;">
-                    {row['category']} ‧ {row['item_name']}
+def main():
+    if "selected_game" not in st.session_state:
+        st.session_state.selected_game = None
+
+    conn = get_connection()
+    if not conn:
+        st.error("資料庫連線中...")
+        return
+
+    # --- 詳情頁 ---
+    if st.session_state.selected_game:
+        game = st.session_state.selected_game
+        if st.button("⬅️ 返回首頁"):
+            st.session_state.selected_game = None
+            st.rerun()
+        
+        st.title(f"🔥 {game} 價目表")
+        df_items = pd.read_sql("SELECT item_name, price FROM GamePrices WHERE game_name = %s ORDER BY price ASC", conn, params=(game,))
+        
+        for i, row in df_items.iterrows():
+            st.markdown(f"""
+                <div class="price-card">
+                    <div style="display: flex; justify-content: space-between; align-items: center;">
+                        <div style="font-size: 18px; color: white;">▪️ {row['item_name']}</div>
+                        <div style="color: #ee4d2d; font-size: 24px; font-weight: bold;">{int(row['price']):,} NT</div>
+                    </div>
                 </div>
-            </div>
-        """, unsafe_allow_html=True)
+            """, unsafe_allow_html=True)
+            st.button(f"📋 複製報價", key=f"cp_{i}")
+
+    # --- 首頁 (網格展示) ---
+    else:
+        st.title("🛍️ 姆斯遊戲商城")
+        df_games = pd.read_sql("SELECT DISTINCT ON (game_name) game_name, image_url FROM GamePrices", conn)
+        
+        if df_games.empty:
+            st.info("目前還沒有資料，請先去管理端新增喔！")
+        else:
+            cols = st.columns(4)
+            for i, row in df_games.reset_index().iterrows():
+                with cols[i % 4]:
+                    st.markdown('<div class="game-card">', unsafe_allow_html=True)
+                    st.image(row['image_url'], use_container_width=True)
+                    st.markdown(f"<div style='padding:10px;'><b>{row['game_name']}</b></div>", unsafe_allow_html=True)
+                    if st.button("查看價目", key=f"go_{row['game_name']}", use_container_width=True):
+                        st.session_state.selected_game = row['game_name']
+                        st.rerun()
+                    st.markdown('</div>', unsafe_allow_html=True)
+
+if __name__ == "__main__":
+    main()
