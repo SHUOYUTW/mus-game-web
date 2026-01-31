@@ -2,6 +2,16 @@ import streamlit as st
 import psycopg2
 import pandas as pd
 
+conn = psycopg2.connect(
+    host=st.secrets["DB_HOST"],
+    database=st.secrets["DB_NAME"],
+    user=st.secrets["DB_USER"],
+    password=st.secrets["DB_PASS"],
+    port=st.secrets["DB_PORT"],
+    sslmode="require",
+    connect_timeout=10  # 增加連線容錯
+    
+)
 st.set_page_config(page_title="姆斯遊戲商城", layout="wide")
 
 # CSS 美化卡片
@@ -50,3 +60,4 @@ def main():
 
 if __name__ == "__main__":
     main()
+
