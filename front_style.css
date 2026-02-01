@@ -1,0 +1,49 @@
+/* 1. 整體背景與字體 */
+.stApp {
+    background-color: #f4f7f6;
+    font-family: 'Inter', sans-serif;
+}
+
+/* 2. 遊戲卡片容器 */
+.game-card {
+    background-color: #ffffff;
+    border-radius: 15px;
+    padding: 15px;
+    text-align: center;
+    box-shadow: 0 4px 6px rgba(0,0,0,0.05);
+    transition: transform 0.3s ease, box-shadow 0.3s ease;
+    border: 1px solid #eee;
+    margin-bottom: 20px;
+}
+
+.game-card:hover {
+    transform: translateY(-5px);
+    box-shadow: 0 10px 20px rgba(0,0,0,0.1);
+    border-color: #ee4d2d; /* 蝦皮紅橘色，增加電商感 */
+}
+
+/* 3. 圖片圓角 */
+.game-card img {
+    border-radius: 10px;
+    object-fit: cover;
+}
+
+/* 4. 報價詳情行的樣式 */
+.price-row {
+    background: #ffffff;
+    color: #333;
+    padding: 12px 20px;
+    border-radius: 10px;
+    margin: 8px 0;
+    border-left: 5px solid #ee4d2d;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    box-shadow: 0 2px 4px rgba(0,0,0,0.03);
+}
+
+.price-text {
+    color: #ee4d2d;
+    font-size: 1.2rem;
+    font-weight: 800;
+}
