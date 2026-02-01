@@ -1,5 +1,5 @@
-streamlit
-pandas
+Flask
+Flask-SQLAlchemy
+Flask-Login
 psycopg2-binary
-pandas
-openpyxl
+gunicorn
